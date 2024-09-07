@@ -3,13 +3,11 @@ from typing import Any, Optional
 import backoff
 
 from dsp.modules.lm import LM
+from dsp.utils.settings import settings
 
 try:
-    import mistralai
     from mistralai.client import MistralClient
-    from mistralai.exceptions import MistralAPIException
-    from mistralai.models.chat_completion import ChatCompletionResponse, ChatMessage
-    mistralai_api_error = MistralAPIException
+    from mistralai.models.usermessage import UserMessage
 except ImportError:
     mistralai_api_error = Exception
 
@@ -56,7 +54,9 @@ class Mistral(LM):
         super().__init__(model)
 
         if mistralai_api_error == Exception:
-            raise ImportError("Not loading Mistral AI because it is not installed. Install it with `pip install mistralai`.")
+            raise ImportError(
+                "Not loading Mistral AI because it is not installed. Install it with `pip install mistralai`."
+            )
 
         self.client = MistralClient(api_key=api_key)
 
@@ -75,14 +75,14 @@ class Mistral(LM):
         raw_kwargs = kwargs
         kwargs = {
             **self.kwargs,
-            "messages": [ChatMessage(role="user", content=prompt)],
+            "messages": [UserMessage(role="user", content=prompt)],
             **kwargs,
         }
 
         # Mistral disallows "n" arguments
         n = kwargs.pop("n", None)
-        if n is not None and n > 1 and kwargs['temperature'] == 0.0:
-            kwargs['temperature'] = 0.7
+        if n is not None and n > 1 and kwargs["temperature"] == 0.0:
+            kwargs["temperature"] = 0.7
 
         response = self.client.chat(**kwargs)
 
@@ -99,7 +99,7 @@ class Mistral(LM):
     @backoff.on_exception(
         backoff.expo,
         (mistralai_api_error),
-        max_time=1000,
+        max_time=settings.backoff_time,
         on_backoff=backoff_hdlr,
         giveup=giveup_hdlr,
     )
@@ -115,7 +115,6 @@ class Mistral(LM):
         return_sorted: bool = False,
         **kwargs,
     ):
-
         assert only_completed, "for now"
         assert return_sorted is False, "for now"
 

@@ -192,7 +192,7 @@ class GenerateModuleInstruction(dspy.Module):
             print(f"PROGRAM DESCRIPTION: {program_description}")
 
             # Identify all modules
-            init_pattern = r"def __init__.*?\):([\s\S]*?)(?=\n\s{4}def|\Z)"
+            init_pattern = r"def __init__\(.*?\):([\s\S]*?)(?=^\s*def|\Z)"
             init_content_match = re.search(init_pattern, self.program_code_string)
             init_content = init_content_match.group(0)
             pattern = r"^(.*dspy\.(ChainOfThought|Predict).*)$"  # TODO: make it so that this extends out to any dspy Module
@@ -237,6 +237,7 @@ class GroundedProposer(Proposer):
         prompt_model,
         trainset,
         program_code_string=None,
+        view_data_batch_size=10,
         use_dataset_summary=True,
         program_aware=True,
         use_task_demos=True,
@@ -257,7 +258,7 @@ class GroundedProposer(Proposer):
         self.prompt_model = prompt_model
         self.program_code_string = program_code_string
         self.data_summary = create_dataset_summary(
-            trainset=trainset, view_data_batch_size=10, prompt_model=prompt_model,
+            trainset=trainset, view_data_batch_size=view_data_batch_size, prompt_model=prompt_model,
         )
         print(f"DATA SUMMARY: {self.data_summary}")
 
